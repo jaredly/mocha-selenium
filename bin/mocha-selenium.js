@@ -10,5 +10,7 @@ program
   .option('-c, --config [file]', 'Specify the config file. Default: ./selenium.json')
   .parse(process.argv);
 
-new Runner(program).execute();
+new Runner(program).execute(function (failed, passed) {
+  process.exit(failed ? 1 : 0);
+});
 
