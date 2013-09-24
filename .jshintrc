@@ -2,5 +2,7 @@
   "laxcomma": true,
   "undef": true,
   "node": true,
-  "-W061": false
+  "nonstandard": true,
+  "-W061": false,
+  "-W065": false
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 var program = require('commander')
-  , Runner = require('../lib')
+  , Runner = require('../lib/runner')
 
 program
   .version('0.0.1')
