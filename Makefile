@@ -9,3 +9,14 @@ test-only:
 
 lint:
 	@./node_modules/.bin/jshint --verbose --extra-ext .js,.json $(tolint)
+
+docs:
+	docco lib/*.js Readme.md
+	mv docs/* ./
+	git add -A
+	git stash
+	git checkout gh-pages
+	git add -A
+	git stash pop
+
+.PHONY: docs lint test test-only
