@@ -1,6 +1,7 @@
 {
   "laxcomma": true,
   "undef": true,
+  "unused": true,
   "node": true,
   "nonstandard": true,
   "-W061": false,

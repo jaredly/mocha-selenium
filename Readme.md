@@ -1,11 +1,27 @@
 
 # Mocha Selenium
+Everything you need for selenium testing in node.js.
 
-## Installation
+### The Library
+Setup and teardown with mocha's `before` and `after`.
+- gives you `wd.driver` Webdriver Client
+- start fresh instance of your app
+- start webdriver server (chrome or phantomjs)
+- take screenshots after failed tests
 
-`npm install -g mocha-selenium`
+```js
+var driver = require('mocha-selenium').setup("Login Page", {
+  appDir: path.dirname(__dirname),
+  lastShot: "failed"
+});
+```
 
-## Usage
+[Read the docs](https://jaredly.github.io/mocha-selenium/) for more information on the options.
+
+### The Runner
+Run your mocha selenium tests in parallel in mutliple browsers.
+
+#### Usage
 
 ```
   Usage: mocha-selenium [options]
@@ -19,7 +35,7 @@
     -c, --config [file]      Specify the config file. Default: ./selenium.json
 ```
 
-## Config
+##### Config
 
 ```javascript
 {
@@ -28,7 +44,8 @@
     local: [browserdef, ...] || {
       browsers: [browserdef, ...],
       inherits: // name or list of names of other environemnts. Their browserdefs will be appended to the current env.
-      // if no hostname is given, mocha-selenium will start its own selenium drivers. Currently phantomjs and chrome are supported
+      // if no hostname is given, mocha-selenium will start its own
+      // selenium drivers. Currently phantomjs and chrome are supported
       hostname: "ondemand.saucelabs.com",
       port: 80,
       auth: {
