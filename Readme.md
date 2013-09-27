@@ -16,7 +16,7 @@ var driver = require('mocha-selenium').setup("Login Page", {
 });
 ```
 
-[Read the docs](https://jaredly.github.io/mocha-selenium/#section-2) for more information on the options.
+[Read the docs](http://jaredly.github.io/mocha-selenium/#section-2) for more information on the options.
 
 ### The Runner
 Run your mocha selenium tests in parallel in mutliple browsers.
