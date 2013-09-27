@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>utils.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="Readme.html">
+                Readme.md
+              </a>
+            
+              
+              <a class="source" href="client.html">
+                client.js
+              </a>
+            
+              
+              <a class="source" href="config.html">
+                config.js
+              </a>
+            
+              
+              <a class="source" href="helpers.html">
+                helpers.js
+              </a>
+            
+              
+              <a class="source" href="index.html">
+                index.js
+              </a>
+            
+              
+              <a class="source" href="local.html">
+                local.js
+              </a>
+            
+              
+              <a class="source" href="progress.html">
+                progress.js
+              </a>
+            
+              
+              <a class="source" href="runner.html">
+                runner.js
+              </a>
+            
+              
+              <a class="source" href="screenshot.html">
+                screenshot.js
+              </a>
+            
+              
+              <a class="source" href="utils.html">
+                utils.js
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>utils.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+<span class="keyword">var</span> path = require(<span class="string">'path'</span>)
+  , glob = require(<span class="string">'glob'</span>)
+  , async = require(<span class="string">'async'</span>);
+
+module.exports = {
+  browserName: browserName,
+  printBrowsers: printBrowsers,
+  printFiles: printFiles,
+  recolor: recolor,
+  color: color,
+
+  resolveFiles: resolveFiles,
+  extendEnv: extendEnv,
+  getBrowsers: getBrowsers,
+  removeDuplicateBrowsers: removeDuplicateBrowsers
+};
+
+<span class="function"><span class="keyword">function</span> <span class="title">browserName</span><span class="params">(browser)</span> {</span>
+  <span class="keyword">return</span> browser[<span class="number">0</span>] +
+    (browser[<span class="number">1</span>] ? <span class="string">' '</span> + browser[<span class="number">1</span>] : <span class="string">''</span>) +
+    (browser[<span class="number">2</span>] === <span class="string">'ANY'</span> ? <span class="string">''</span> : <span class="string">' '</span> + browser[<span class="number">2</span>]);
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">printBrowsers</span><span class="params">(browsers)</span> {</span>
+  console.log(<span class="string">'Browsers:'</span>);
+  <span class="keyword">for</span> (<span class="keyword">var</span> i=<span class="number">0</span>; i&lt;browsers.length; i++) {
+    console.log(<span class="string">'  - '</span> + browserName(browsers[i]));
+  }
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">printFiles</span><span class="params">(files)</span> {</span>
+  console.log(<span class="string">'Files:'</span>);
+  <span class="keyword">for</span> (<span class="keyword">var</span> i=<span class="number">0</span>; i&lt;files.length; i++) {
+    console.log(<span class="string">'  - '</span> + files[i]);
+  }
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">color</span><span class="params">(text, num)</span> {</span>
+  <span class="keyword">return</span> <span class="string">'\u001b['</span> + num + <span class="string">'m'</span> + text + <span class="string">'\u001b[0m'</span>;
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">recolor</span><span class="params">(text, result)</span> {</span>
+  <span class="keyword">var</span> lines = text.trim().split(<span class="string">'\n'</span>);
+  lines[lines.length - <span class="number">1</span>] = color(lines[lines.length - <span class="number">1</span>], result ? <span class="number">31</span> : <span class="number">32</span>);
+  <span class="keyword">return</span> lines.join(<span class="string">'\n'</span>) + <span class="string">'\n\n'</span>;
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">resolveFiles</span><span class="params">(files, cwd, done)</span> {</span>
+  <span class="keyword">var</span> tasks = [];
+  files.forEach(<span class="function"><span class="keyword">function</span> <span class="params">(file)</span> {</span>
+    <span class="keyword">var</span> full = path.join(cwd, file);
+    tasks.push(<span class="function"><span class="keyword">function</span> <span class="params">(next)</span> {</span>
+      glob(full, next);
+    });
+  });
+  async.parallel(tasks, <span class="function"><span class="keyword">function</span> <span class="params">(err, results)</span> {</span>
+    <span class="keyword">if</span> (err) <span class="keyword">return</span> done(err);
+    <span class="keyword">var</span> all = [];
+    <span class="keyword">for</span> (<span class="keyword">var</span> i=<span class="number">0</span>; i&lt;results.length; i++) {
+      all = all.concat(results[i]);
+    }
+    done(<span class="literal">null</span>, all);
+  });
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">extendEnv</span><span class="params">(envs, env)</span> {</span>
+  <span class="keyword">var</span> extend = env.extend
+    , browsers = env.browsers.slice();
+  <span class="keyword">if</span> (!extend) <span class="keyword">return</span> browsers;
+  <span class="keyword">if</span> (<span class="string">'string'</span> === <span class="keyword">typeof</span> extend) {
+    extend = [extend];
+  }
+  <span class="keyword">for</span> (<span class="keyword">var</span> i=<span class="number">0</span>; i&lt;extend.length; i++) {
+    browsers = browsers.concat(getBrowsers(envs[extend[i]]));
+  }
+  <span class="keyword">return</span> removeDuplicateBrowsers(browsers);
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">getBrowsers</span><span class="params">(env)</span> {</span>
+  <span class="keyword">if</span> (Array.isArray(env)) <span class="keyword">return</span> env;
+  <span class="keyword">return</span> env.browsers;
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">removeDuplicateBrowsers</span><span class="params">(browsers)</span> {</span>
+  <span class="keyword">var</span> good = []
+    , have;
+  <span class="keyword">for</span> (<span class="keyword">var</span> i=<span class="number">0</span>; i&lt;browsers.length; i++) {
+    have = <span class="literal">false</span>;
+    <span class="keyword">for</span> (<span class="keyword">var</span> j=<span class="number">0</span>; j&lt;good.length; j++) {
+      <span class="keyword">if</span> (browsers[i][<span class="number">0</span>] === good[j][<span class="number">0</span>] &amp;&amp;
+          browsers[i][<span class="number">1</span>] === good[j][<span class="number">1</span>] &amp;&amp;
+          browsers[i][<span class="number">2</span>] === good[j][<span class="number">2</span>]) {
+        have = <span class="literal">true</span>;
+      }
+    }
+    <span class="keyword">if</span> (!have) good.push(browsers[i]);
+  }
+  <span class="keyword">return</span> good;
+}</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

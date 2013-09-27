@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>progress.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="Readme.html">
+                Readme.md
+              </a>
+            
+              
+              <a class="source" href="client.html">
+                client.js
+              </a>
+            
+              
+              <a class="source" href="config.html">
+                config.js
+              </a>
+            
+              
+              <a class="source" href="helpers.html">
+                helpers.js
+              </a>
+            
+              
+              <a class="source" href="index.html">
+                index.js
+              </a>
+            
+              
+              <a class="source" href="local.html">
+                local.js
+              </a>
+            
+              
+              <a class="source" href="progress.html">
+                progress.js
+              </a>
+            
+              
+              <a class="source" href="runner.html">
+                runner.js
+              </a>
+            
+              
+              <a class="source" href="screenshot.html">
+                screenshot.js
+              </a>
+            
+              
+              <a class="source" href="utils.html">
+                utils.js
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>progress.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+<span class="keyword">var</span> _ = require(<span class="string">'underscore'</span>);
+
+module.exports = Progress;
+
+<span class="keyword">var</span> COLORS = {
+  <span class="string">'green'</span>: <span class="number">32</span>,
+  <span class="string">'red'</span>: <span class="number">31</span>
+};
+
+<span class="function"><span class="keyword">function</span> <span class="title">color</span><span class="params">(text, name, tty)</span> {</span>
+  <span class="keyword">if</span> (!tty) <span class="keyword">return</span> text;
+  <span class="keyword">return</span> <span class="string">'\u001b['</span> + COLORS[name] + <span class="string">'m'</span> + text + <span class="string">'\u001b[0m'</span>;
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">Progress</span><span class="params">(num, options)</span> {</span>
+  <span class="keyword">this</span>.options = _.extend({
+    tty: <span class="literal">true</span>,
+    prefix: <span class="string">'progress: '</span>
+  }, options);
+  <span class="keyword">this</span>.prefix = <span class="keyword">this</span>.options.prefix;
+  <span class="keyword">this</span>.update = <span class="keyword">this</span>.options.update;
+  <span class="keyword">this</span>.rl = require(<span class="string">'readline'</span>).createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+  <span class="keyword">this</span>.rl.setPrompt(<span class="string">''</span>, <span class="number">0</span>);
+  <span class="keyword">this</span>.rl.clearLine = <span class="keyword">function</span>() {
+    <span class="keyword">this</span>.write(<span class="literal">null</span>, {ctrl: <span class="literal">true</span>, name: <span class="string">'u'</span>});
+  };
+  <span class="keyword">this</span>.num = num;
+  <span class="keyword">this</span>.passed = <span class="number">0</span>;
+  <span class="keyword">this</span>.failed = <span class="number">0</span>;
+  <span class="keyword">this</span>.started = <span class="keyword">new</span> Date().getTime();
+  <span class="keyword">if</span> (<span class="keyword">this</span>.update) {
+    <span class="keyword">this</span>._interval = setInterval(<span class="keyword">this</span>.render.bind(<span class="keyword">this</span>), <span class="keyword">this</span>.update);
+  }
+}
+
+Progress.prototype = {
+  render: <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+    <span class="keyword">var</span> text = <span class="keyword">this</span>.prefix
+      , left = <span class="keyword">this</span>.num - <span class="keyword">this</span>.passed - <span class="keyword">this</span>.failed;
+    text += color(<span class="keyword">this</span>.passed, <span class="string">'green'</span>, <span class="keyword">this</span>.options.tty) + <span class="string">':'</span>;
+    text += color(<span class="keyword">this</span>.failed, <span class="string">'red'</span>, <span class="keyword">this</span>.options.tty) + <span class="string">':'</span>;
+    text += left;
+    <span class="keyword">if</span> (<span class="keyword">this</span>.update) {
+      <span class="keyword">var</span> dur = parseInt((<span class="keyword">new</span> Date().getTime() - <span class="keyword">this</span>.started) / <span class="number">1000</span>);
+      text += <span class="string">' '</span> + dur + <span class="string">'s'</span>;
+    }
+    <span class="keyword">this</span>.rl.clearLine();
+    <span class="keyword">this</span>.rl.write(text);
+  },
+  inc: <span class="function"><span class="keyword">function</span> <span class="params">(passed)</span> {</span>
+    <span class="keyword">this</span>[passed ? <span class="string">'passed'</span> : <span class="string">'failed'</span>]++;
+    <span class="keyword">this</span>.render();
+    <span class="keyword">if</span> (<span class="keyword">this</span>.passed + <span class="keyword">this</span>.failed &gt;= <span class="keyword">this</span>.num) {
+      <span class="keyword">this</span>.terminate();
+      <span class="keyword">return</span> <span class="literal">true</span>;
+    }
+  },
+  terminate: <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+    clearInterval(<span class="keyword">this</span>._interval);
+    <span class="keyword">this</span>.rl.resume();
+    <span class="keyword">if</span> (<span class="keyword">this</span>.clear) {
+      <span class="keyword">this</span>.rl.clearLine();
+      <span class="keyword">this</span>.rl.close();
+    } <span class="keyword">else</span> {
+      <span class="keyword">this</span>.rl.close();
+      console.log();
+    }
+  }
+};</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

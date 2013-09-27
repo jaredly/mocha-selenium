@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>helpers.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="Readme.html">
+                Readme.md
+              </a>
+            
+              
+              <a class="source" href="client.html">
+                client.js
+              </a>
+            
+              
+              <a class="source" href="config.html">
+                config.js
+              </a>
+            
+              
+              <a class="source" href="helpers.html">
+                helpers.js
+              </a>
+            
+              
+              <a class="source" href="index.html">
+                index.js
+              </a>
+            
+              
+              <a class="source" href="local.html">
+                local.js
+              </a>
+            
+              
+              <a class="source" href="progress.html">
+                progress.js
+              </a>
+            
+              
+              <a class="source" href="runner.html">
+                runner.js
+              </a>
+            
+              
+              <a class="source" href="screenshot.html">
+                screenshot.js
+              </a>
+            
+              
+              <a class="source" href="utils.html">
+                utils.js
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>helpers.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+<span class="comment">/** Selenium Webdriver helper functions **/</span>
+
+<span class="keyword">var</span> async = require(<span class="string">'async'</span>)
+  , wd = require(<span class="string">'wd'</span>);
+
+module.exports = {
+  ensureCookie: ensureCookie,
+  fillInForm: fillInForm,
+  extension: {
+    ensureCookie: wrap(ensureCookie),
+    fillInForm: wrap(fillInForm)
+  }
+};
+
+<span class="function"><span class="keyword">function</span> <span class="title">wrap</span><span class="params">(fn)</span> {</span>
+  <span class="keyword">return</span> <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+    <span class="keyword">return</span> fn.apply(<span class="literal">null</span>, [<span class="keyword">this</span>].concat([].slice.call(arguments)));
+  };
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>Set a cookie. If the cookie is already set, we don&#39;t re-set it.
+  b: driver
+  name: cookie name
+  value: string or fn(curvalue) -&gt; newvalue
+  done(err): continuation</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">ensureCookie</span><span class="params">(b, name, value, done)</span> {</span>
+  b.allCookies(<span class="function"><span class="keyword">function</span> <span class="params">(err, cookies)</span> {</span>
+    <span class="keyword">if</span> (err) <span class="keyword">return</span> done(err);
+    <span class="keyword">var</span> cookie = cookies.reduce(<span class="function"><span class="keyword">function</span> <span class="params">(got, cookie)</span> {</span>
+      <span class="keyword">if</span> (got) <span class="keyword">return</span> got;
+      <span class="keyword">if</span> (cookie.name === name) <span class="keyword">return</span> cookie;
+      <span class="keyword">return</span> <span class="literal">null</span>;
+    }, <span class="literal">null</span>);
+    <span class="keyword">if</span> (!cookie) <span class="keyword">return</span> done(<span class="keyword">new</span> Error(<span class="string">'No "'</span> + name + <span class="string">'" cookie'</span>));
+    <span class="keyword">if</span> (<span class="string">'function'</span> === <span class="keyword">typeof</span> value) {
+      value = value(cookie.value);
+    }
+    <span class="keyword">if</span> (value === cookie.value) {
+      <span class="keyword">return</span> done();
+    }
+    b.deleteCookie(name, <span class="function"><span class="keyword">function</span> <span class="params">(err)</span> {</span>
+      <span class="keyword">if</span> (err) <span class="keyword">return</span> done(err);
+      b.setCookie(cookie, <span class="function"><span class="keyword">function</span> <span class="params">(err)</span> {</span>
+        <span class="keyword">if</span> (err) <span class="keyword">return</span> done(err);
+        b.refresh(<span class="function"><span class="keyword">function</span> <span class="params">(err)</span> {</span>
+          <span class="keyword">if</span> (err) <span class="keyword">return</span> done(err);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>validate that the cookie was indeed set</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>          b.allCookies(<span class="function"><span class="keyword">function</span> <span class="params">(err, cookies)</span> {</span>
+            <span class="keyword">var</span> cookie = cookies.reduce(<span class="function"><span class="keyword">function</span> <span class="params">(got, cookie)</span> {</span>
+              <span class="keyword">if</span> (got) <span class="keyword">return</span> got;
+              <span class="keyword">if</span> (cookie.name === name) <span class="keyword">return</span> cookie;
+              <span class="keyword">return</span> <span class="literal">null</span>;
+            }, <span class="literal">null</span>);
+            <span class="keyword">if</span> (!cookie) <span class="keyword">return</span> done(<span class="keyword">new</span> Error(<span class="string">'No "'</span> + name + <span class="string">'" cookie after setting'</span>));
+            <span class="keyword">if</span> (cookie.value !== value) {
+              <span class="keyword">return</span> done(<span class="keyword">new</span> Error(<span class="string">'unable to set "'</span> + name + <span class="string">'" cookie'</span>));
+            }
+            <span class="keyword">return</span> done();
+          });
+       });
+     });
+   });
+  });
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>Fill in a form with data
+  driver: driver
+  data: {name: value, ...}
+  form: selector for form. null for global lookup
+  then(err): continuation
+fillInForm(driver, data, then)
+fillInForm(driver, data, formSelector, then)</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">fillInForm</span><span class="params">(driver, data, formSelector, then)</span> {</span>
+  <span class="keyword">if</span> (arguments.length === <span class="number">3</span>) {
+    then = formSelector;
+    formSelector = <span class="literal">null</span>;
+  }
+  <span class="keyword">var</span> keys = Object.keys(data)
+    , steps = [];
+  keys.forEach(<span class="function"><span class="keyword">function</span> <span class="params">(key)</span> {</span>
+    <span class="keyword">var</span> value, getter;
+    value = data[key];
+    <span class="keyword">if</span> (formSelector) {
+      getter = driver.elementByCss.bind(driver, formSelector + <span class="string">' [name="'</span> + key + <span class="string">'"]'</span>);
+    } <span class="keyword">else</span> {
+      getter = driver.elementByName.bind(driver, key);
+    }
+    steps.push(<span class="function"><span class="keyword">function</span> <span class="params">(next)</span> {</span>
+      getter(<span class="function"><span class="keyword">function</span> <span class="params">(err, el)</span> {</span>
+        <span class="keyword">if</span> (err) <span class="keyword">return</span> then(err);
+        el.type(value, <span class="function"><span class="keyword">function</span> <span class="params">(err)</span> {</span>
+          <span class="keyword">if</span> (err) <span class="keyword">return</span> then(err);
+          next(<span class="literal">null</span>, getter);
+        });
+      });
+    });
+  });
+  async.series(steps, <span class="function"><span class="keyword">function</span> <span class="params">(err, els)</span> {</span>
+    <span class="keyword">if</span> (err) <span class="keyword">return</span> then(err);
+    els[els.length - <span class="number">1</span>](<span class="function"><span class="keyword">function</span> <span class="params">(err, el)</span> {</span>
+      <span class="keyword">if</span> (err) <span class="keyword">return</span> then(err);
+      el.type(wd.SPECIAL_KEYS.Tab, then);
+    });
+  });
+}</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Mocha Selenium</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="Readme.html">
+                Readme.md
+              </a>
+            
+              
+              <a class="source" href="client.html">
+                client.js
+              </a>
+            
+              
+              <a class="source" href="config.html">
+                config.js
+              </a>
+            
+              
+              <a class="source" href="helpers.html">
+                helpers.js
+              </a>
+            
+              
+              <a class="source" href="index.html">
+                index.js
+              </a>
+            
+              
+              <a class="source" href="local.html">
+                local.js
+              </a>
+            
+              
+              <a class="source" href="progress.html">
+                progress.js
+              </a>
+            
+              
+              <a class="source" href="runner.html">
+                runner.js
+              </a>
+            
+              
+              <a class="source" href="screenshot.html">
+                screenshot.js
+              </a>
+            
+              
+              <a class="source" href="utils.html">
+                utils.js
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h1">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <h1>Mocha Selenium</h1>
+<p>Everything you need for selenium testing in node.js.</p>
+<h3>The Library</h3>
+<p>Setup and teardown with mocha&#39;s <code>before</code> and <code>after</code>.
+- gives you <code>wd.driver</code> Webdriver Client
+- start fresh instance of your app
+- start webdriver server (chrome or phantomjs)
+- take screenshots after failed tests</p>
+<pre><code class="lang-js">var driver = require(&#39;mocha-selenium&#39;).setup(&quot;Login Page&quot;, {
+appDir: path.dirname(__dirname),
+lastShot: &quot;failed&quot;
+});</code></pre>
+<p><a href="https://jaredly.github.io/mocha-selenium/">Read the docs</a> for more information on the options.</p>
+<h3>The Runner</h3>
+<p>Run your mocha selenium tests in parallel in mutliple browsers.</p>
+<h4>Usage</h4>
+<pre><code>Usage: mocha-selenium [options]
+
+Options:
+
+-h, --help               output usage information
+-V, --version            output the version number
+-e, --environment [env]  Pick the environment to run (host + browsers). Default: local
+-p, --parallel           Run the tests in parallel. Default: false
+-c, --config [file]      Specify the config file. Default: ./selenium.json</code></pre>
+<h5>Config</h5>
+<pre><code class="lang-javascript">{
+files: // filename or glob, or list of filenames or globs
+envs: { // a map of [envname] to an environment definition.
+local: [browserdef, ...] || {
+browsers: [browserdef, ...],
+inherits: // name or list of names of other environemnts. Their browserdefs will be appended to the current env.
+// if no hostname is given, mocha-selenium will start its own
+// selenium drivers. Currently phantomjs and chrome are supported
+hostname: &quot;ondemand.saucelabs.com&quot;,
+port: 80,
+auth: {
+type: &#39;plain&#39;,
+username: &#39;MyName&#39;,
+password: &#39;secret&#39;
+} || {
+type: &#39;env&#39;, // the username and password are environmental variables
+username: &#39;SAUCE_USERNAME&#39;,
+password: &#39;SAUCE_ACCESS_KEY&#39;
+}
+},
+otherenv: ...,
+...
+}
+}</code></pre>
+<h4>Browserdef:</h4>
+<pre><code>[&quot;browsername&quot;, &quot;version&quot;, &quot;platform&quot;]
+
+ex:
+[&quot;internet explorer&quot;, &quot;8&quot;, &quot;Windows XP&quot;]</code></pre>
+
+            </div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

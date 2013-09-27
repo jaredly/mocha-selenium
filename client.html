@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>client.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="Readme.html">
+                Readme.md
+              </a>
+            
+              
+              <a class="source" href="client.html">
+                client.js
+              </a>
+            
+              
+              <a class="source" href="config.html">
+                config.js
+              </a>
+            
+              
+              <a class="source" href="helpers.html">
+                helpers.js
+              </a>
+            
+              
+              <a class="source" href="index.html">
+                index.js
+              </a>
+            
+              
+              <a class="source" href="local.html">
+                local.js
+              </a>
+            
+              
+              <a class="source" href="progress.html">
+                progress.js
+              </a>
+            
+              
+              <a class="source" href="runner.html">
+                runner.js
+              </a>
+            
+              
+              <a class="source" href="screenshot.html">
+                screenshot.js
+              </a>
+            
+              
+              <a class="source" href="utils.html">
+                utils.js
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>client.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="comment">/* globals $:true, document:true */</span>
+
+<span class="comment">/** CLIENT SIDE
+ *  the following functions are passed into the browser as text. They
+ *  are not evaluated on the serverside. **/</span>
+
+module.exports = {
+  afterXhr: afterXhr,
+  snoopXhr: snoopXhr
+};
+
+<span class="function"><span class="keyword">function</span> <span class="title">afterXhr</span><span class="params">(timeout, cb)</span> {</span>
+  <span class="keyword">if</span> (!cb) {
+    cb = timeout;
+    timeout = <span class="number">0</span>;
+  }
+  $(document).one(<span class="string">'ajaxComplete'</span>, <span class="function"><span class="keyword">function</span> <span class="params">(evt, res, req)</span> {</span>
+    console.log(res, req, res.getAllResponseHeaders());
+    <span class="keyword">var</span> body = <span class="literal">null</span>;
+    <span class="keyword">try</span> {
+      body = JSON.parse(res.responseText);
+    } <span class="keyword">catch</span> (e) {}
+    setTimeout(<span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+      cb({
+        status: res.status,
+        text: res.responseText,
+        body: body,
+        headers: res.getAllResponseHeaders(),
+        sent: {
+          data: req.data,
+          accept: req.Accept,
+          contentType: req.contentType,
+          url: req.url
+        }
+      });
+    }, timeout);
+  });
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">snoopXhr</span><span class="params">(cb)</span> {</span>
+  $(document).one(<span class="string">'ajaxComplete'</span>, <span class="function"><span class="keyword">function</span> <span class="params">(evt, res, req)</span> {</span>
+    console.log(res, req, res.getAllResponseHeaders());
+    <span class="keyword">var</span> body = <span class="literal">null</span>;
+    <span class="keyword">try</span> {
+      body = JSON.parse(res.responseText);
+    } <span class="keyword">catch</span> (e) {}
+    cb({
+      status: res.status,
+      text: res.responseText,
+      body: body,
+      headers: res.getAllResponseHeaders(),
+      sent: {
+        data: req.data,
+        accept: req.Accept,
+        contentType: req.contentType,
+        url: req.url
+      }
+    });
+  });
+}</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>
