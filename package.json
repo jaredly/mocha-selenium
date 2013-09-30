@@ -29,7 +29,8 @@
     "commander": "~2.0.0",
     "wd": "~0.1.4",
     "async": "~0.2.9",
-    "glob": "~3.2.6"
+    "glob": "~3.2.6",
+    "mkdirp": "~0.3.5"
   },
   "devDependencies": {
     "jshint": "~2.1.11",
