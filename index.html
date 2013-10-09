@@ -157,7 +157,7 @@ falsey, (and there&#39;s no <code>process.env.SEL_URL</code>) we&#39;ll start up
 server on a random port.</p>
 <h5>server</h5>
 <p>The selenium server. <code>{host: , port: , username: , password: }</code>.
-If it&#39;s &#39;dev&#39;, we&#39;ll start up a <code>chromedriver</code> or <code>phantomjs</code>, based
+If it&#39;s <code>&quot;dev&quot;</code>, we&#39;ll start up a <code>chromedriver</code> or <code>phantomjs</code>, based
 on the <code>browser</code> argument defaulting to <code>chromedriver</code>.</p>
 <p>If <code>server</code> is null and <code>process.env.SEL_HOST</code> is truthy, then the
 server is taken from the following <code>ENV</code> variables. If <code>SEL_HOST</code>
@@ -178,8 +178,9 @@ is falsey, we&#39;ll start up a webdriver for you.</p>
 <li>os: <code>SEL_PLATFORM</code></li>
 </ul>
 <h5>lastShot</h5>
-<p>save screenshots of the final state of each test. <code>true</code>: all
-test. <code>&#39;failed&#39;</code>: only tests that failed.</p>
+<p>save screenshots of the final state of each test. <code>true</code>: take
+shots for all tests. <code>&quot;failed&quot;</code>: only tests that failed. <code>false</code>:
+don&#39;t take screenshots.</p>
 <h5>keepAlive</h5>
 <p>Don&#39;t kill the browser after completing tests. Useful for manually
 inspecting failures.</p>

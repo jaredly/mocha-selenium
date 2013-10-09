@@ -87,14 +87,40 @@
 <h3>The Library</h3>
 <p>Setup and teardown with mocha&#39;s <code>before</code> and <code>after</code>.
 - gives you <code>wd.driver</code> Webdriver Client
-- start fresh instance of your app
-- start webdriver server (chrome or phantomjs)
+- start fresh instance of your app (if needed)
+- start webdriver server (if needed)
 - take screenshots after failed tests</p>
 <pre><code class="lang-js">var driver = require(&#39;mocha-selenium&#39;).setup(&quot;Login Page&quot;, {
 appDir: path.dirname(__dirname),
 lastShot: &quot;failed&quot;
 });</code></pre>
 <p><a href="http://jaredly.github.io/mocha-selenium/#section-2">Read the docs</a> for more information on the options.</p>
+<h3>Convenience functions added to the driver</h3>
+<p>In addition to the normal
+<a href="https://github.com/admc/wd/#supported-methods">wd methods</a>, there are
+the following:</p>
+<h4>General Methods</h4>
+<h5><code>ensureCookie(name, value, done(err))</code></h5>
+<p>On the current page, if the cookie by the name of <code>name</code> with value
+<code>value</code> does not exist, set the cookie and refresh the page.</p>
+<p>If value is a function, it is called with the current value of the
+cookie. If it returns a value other than the current cookie value, the
+cookie is set to that value.</p>
+<h5><code>fillInForm(data, [formSelector,] done(err))</code></h5>
+<p>Data is a map of <code>&quot;input name&quot;: &quot;value to type&quot;</code>. If <code>formSelector</code> is
+given, only inputs that are children of the given selector will be
+filled in. Otherwise, the first input in the document with the given
+<code>name</code> will be populated.</p>
+<h4>Element-specific methods</h4>
+<p>The following suffixes are available for these methods, mirroring the <code>wd</code> library:</p>
+<p>ByClassName, ByCssSelector, ById, ByName, ByLinkText, ByPartialLinkText, ByTagName, ByXPath, ByCss.</p>
+<p>I will use the <code>ByCss</code> suffix for demonstration.</p>
+<ul>
+<li>valueByCss(selector, done(err, value, element)</li>
+<li>clickByCss(selector, done(err, element)</li>
+<li>waitAndGet(selector, timeout, done(err, element)</li>
+<li>waitAndClickByCss(selector, timeout, done(err, element)</li>
+</ul>
 <h3>The Runner</h3>
 <p>Run your mocha selenium tests in parallel in mutliple browsers.</p>
 <h4>Usage</h4>
