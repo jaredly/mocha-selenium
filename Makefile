@@ -16,7 +16,7 @@ docs:
 	git add -A
 	git stash
 	git checkout gh-pages
-	git add -A
+	git rm *.html
 	git stash pop
 
 .PHONY: docs lint test test-only
