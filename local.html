@@ -93,6 +93,8 @@
             
             <div class="content"><div class='highlight'><pre>
 <span class="keyword">var</span> spawn = require(<span class="string">'child_process'</span>).spawn
+  , async = require(<span class="string">'async'</span>)
+
   , utils = require(<span class="string">'./utils'</span>);
 
 module.exports = {
@@ -124,12 +126,68 @@ module.exports = {
   <span class="keyword">var</span> ready = {};
   <span class="function"><span class="keyword">function</span> <span class="title">next</span><span class="params">(which)</span> {</span>
     ready[which] = <span class="literal">true</span>;
-    <span class="keyword">if</span> ((!apport || ready.app) &amp;&amp; (!driverPort || ready.driver)) done();
+    <span class="keyword">if</span> ((!apport || ready.app) &amp;&amp; (!driverPort || ready.driver)) {
+      console.log(<span class="string">''</span>);
+      done();
+    }
   }
   <span class="keyword">return</span> {
     app: apport &amp;&amp; startApp(appdir, apport, next.bind(<span class="literal">null</span>, <span class="string">'app'</span>)),
     driver: driverPort &amp;&amp; startDriver(browser, driverPort, next.bind(<span class="literal">null</span>, <span class="string">'driver'</span>))
   };
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">killNicely</span><span class="params">(child, timeout, done)</span> {</span>
+  <span class="keyword">if</span> (arguments.length === <span class="number">2</span>) {
+    done = timeout;
+    timeout = <span class="number">1000</span>;
+  }
+  <span class="keyword">if</span> (child.hasExited) {
+    done(<span class="keyword">new</span> Error(<span class="string">'Child process has already exited'</span>));
+  }
+  <span class="keyword">var</span> timeid = setTimeout(<span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+    child.removeListener(<span class="string">'exit'</span>, exit);
+    done(<span class="keyword">new</span> Error(<span class="string">'Child process failed to exit within the specified timeout.'</span>));
+  }, timeout);
+  child.on(<span class="string">'exit'</span>, exit);
+  <span class="function"><span class="keyword">function</span> <span class="title">exit</span><span class="params">()</span> {</span>
+    clearTimeout(timeid);
+    done();
+  }
+  child.kill();
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">killRunning</span><span class="params">(running, done)</span> {</span>
+  <span class="keyword">if</span> (!running.app &amp;&amp; !running.driver) <span class="keyword">return</span> done();
+  <span class="keyword">var</span> killed = {
+    app: !running.app,
+    driver: !running.driver
+  };
+  <span class="function"><span class="keyword">function</span> <span class="title">iskilled</span><span class="params">(which)</span> {</span>
+    killed[which] = <span class="literal">true</span>;
+    <span class="keyword">if</span> (killed.app &amp;&amp; killed.driver) done();
+  }
+  <span class="keyword">if</span> (running.app) {
+    killNicely(running.app, iskilled.bind(<span class="literal">null</span>, <span class="string">'app'</span>));
+  }
+  <span class="keyword">if</span> (running.driver) {
+    killNicely(running.driver, iskilled.bind(<span class="literal">null</span>, <span class="string">'driver'</span>));
+  }
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">quitDrivers</span><span class="params">(drivers, done)</span> {</span>
+  <span class="keyword">var</span> tasks = [];
+  <span class="keyword">for</span> (<span class="keyword">var</span> i=<span class="number">0</span>; i&lt;drivers.length; i++) {
+    tasks.push(drivers[i].quit.bind(drivers[i]));
+  }
+  async.parallel(tasks, <span class="function"><span class="keyword">function</span> <span class="params">(err)</span> {</span>
+    <span class="keyword">var</span> e;
+    <span class="keyword">if</span> (err) {
+      e = <span class="keyword">new</span> Error(<span class="string">'Error shutting down dependent drivers: '</span> + err.message);
+      e.stack = err.stack;
+    }
+    done(e);
+  });
 }</pre></div></div>
             
         </li>
@@ -145,21 +203,29 @@ module.exports = {
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">teardown</span><span class="params">(running)</span> {</span>
-  <span class="keyword">if</span> (running.app) running.app.kill();
-  <span class="keyword">if</span> (running.driver) running.driver.kill();
+            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">teardown</span><span class="params">(running, drivers, done)</span> {</span>
+  <span class="keyword">if</span> (!drivers || !drivers.length) {
+    <span class="keyword">return</span> killRunning(running, done);
+  }
+  quitDrivers(drivers, <span class="function"><span class="keyword">function</span> <span class="params">(err)</span> {</span>
+    killRunning(running, <span class="function"><span class="keyword">function</span> <span class="params">(err2)</span> {</span>
+      done(err || err2);
+    });
+  });
 }
 
 <span class="keyword">var</span> DRIVERS = {
   chrome: {
     cmd: <span class="string">'chromedriver'</span>,
     args: [<span class="string">'--url-base=wd/hub'</span>],
-    port: <span class="string">'--port='</span>
+    port: <span class="string">'--port='</span>,
+    listen: <span class="string">'on port'</span>
   },
   phantomjs: {
     cmd: <span class="string">'phantomjs'</span>,
     args: [],
-    port: <span class="string">'--webdriver='</span>
+    port: <span class="string">'--webdriver='</span>,
+    listen: <span class="string">'running on port'</span>
   }
 };
 
@@ -167,22 +233,45 @@ module.exports = {
   <span class="keyword">var</span> name = browser[<span class="number">0</span>].toLowerCase()
     , config = DRIVERS.chrome;
 
-  console.log(utils.color(<span class="string">'  [starting webdriver]'</span>, <span class="number">32</span>));
-  <span class="keyword">if</span> (name.indexOf(<span class="string">'phantom'</span>) === <span class="number">0</span> || name.indexOf(<span class="string">'google'</span>) === <span class="number">0</span>) {
+  console.log(utils.color(<span class="string">'  [starting '</span> + config.cmd + <span class="string">' on port '</span> + port + <span class="string">']'</span>, <span class="number">32</span>));
+  <span class="keyword">if</span> (name.indexOf(<span class="string">'phantom'</span>) === <span class="number">0</span>) {
     config = DRIVERS.phantomjs;
-  } <span class="keyword">else</span> <span class="keyword">if</span> (name.indexOf(<span class="string">'phantom'</span>) !== <span class="number">0</span>) {
-    console.warn(<span class="string">'No driver for '</span> + name +<span class="string">'. Using chrome'</span>);
+  } <span class="keyword">else</span> <span class="keyword">if</span> (name.indexOf(<span class="string">'chrome'</span>) !== <span class="number">0</span> &amp;&amp; name.indexOf(<span class="string">'google'</span>) !== <span class="number">0</span>) {
+    console.warn(<span class="string">'  No driver for '</span> + name +<span class="string">'. Using chrome'</span>);
   }
   <span class="keyword">var</span> child = spawn(config.cmd, config.args.concat([config.port + port]), {
     stdio: [<span class="literal">null</span>, <span class="string">'pipe'</span>, <span class="string">'pipe'</span>]
   });
+  <span class="keyword">var</span> out = <span class="string">''</span>;
   <span class="function"><span class="keyword">function</span> <span class="title">listen</span><span class="params">(data)</span> {</span>
-    <span class="keyword">if</span> (data.toString().indexOf(<span class="string">'running on port'</span>) !== -<span class="number">1</span>) {
+    out += data.toString();</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>console.log([data.toString()])</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> (data.toString().indexOf(config.listen) !== -<span class="number">1</span>) {
       console.log(utils.color(<span class="string">'  [webdriver ready]'</span>, <span class="number">32</span>));
       child.stdout.removeListener(<span class="string">'data'</span>, listen);
+      child.removeListener(<span class="string">'exit'</span>, exit);
       next();
     }
   }
+  <span class="function"><span class="keyword">function</span> <span class="title">exit</span><span class="params">()</span> {</span>
+    console.log(<span class="string">'\n'</span> + out);
+    console.error(utils.color(<span class="string">'\nFailed to start webdriver '</span> + name + <span class="string">'!\nPlease make sure you have the required binary "'</span> + config.cmd + <span class="string">'" available on your $PATH. Quiting'</span>, <span class="number">31</span>));
+    process.exit(<span class="number">1</span>);
+  }
+  child.on(<span class="string">'exit'</span>, exit);
   child.stdout.on(<span class="string">'data'</span>, listen);
   <span class="keyword">return</span> child;
 }
@@ -192,14 +281,23 @@ module.exports = {
         cwd: appdir,
         stdio: [<span class="literal">null</span>, <span class="string">'pipe'</span>, process.stderr]
       });
-  console.log(utils.color(<span class="string">'  [starting foreman]'</span>, <span class="number">32</span>));
+  console.log(utils.color(<span class="string">'  [starting foreman on port '</span> + port + <span class="string">' in directory '</span> + appdir + <span class="string">']'</span>, <span class="number">32</span>));
+  <span class="keyword">var</span> out = <span class="string">''</span>;
   <span class="function"><span class="keyword">function</span> <span class="title">listen</span><span class="params">(data)</span> {</span>
+    out += data.toString();
     <span class="keyword">if</span> (data.toString().indexOf(<span class="string">'listening on port'</span>) !== -<span class="number">1</span>) {
       console.log(utils.color(<span class="string">'  [foreman ready]'</span>, <span class="number">32</span>));
       app.stdout.removeListener(<span class="string">'data'</span>, listen);
+      app.removeListener(<span class="string">'exit'</span>, exit);
       next();
     }
   }
+  <span class="function"><span class="keyword">function</span> <span class="title">exit</span><span class="params">()</span> {</span>
+    console.log(<span class="string">'\n'</span> + out);
+    console.error(utils.color(<span class="string">"\nFailed to start foreman!\nIf you're not in your app's root directory, be sure to set the env variable APP_HOME. Quiting"</span>, <span class="number">31</span>));
+    process.exit(<span class="number">1</span>);
+  }
+  app.on(<span class="string">'exit'</span>, exit);
   app.stdout.on(<span class="string">'data'</span>, listen);
   <span class="keyword">return</span> app;
 }</pre></div></div>

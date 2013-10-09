@@ -97,6 +97,12 @@
 <span class="keyword">var</span> webdriver = require(<span class="string">'wd'</span>)
   , _ = require(<span class="string">'underscore'</span>)
   , mkdirp = require(<span class="string">'mkdirp'</span>)
+  , debugs = require(<span class="string">'debug'</span>)
+  , debug = {
+      info: debugs(<span class="string">'mocha-selenium:info'</span>),
+      warning: debugs(<span class="string">'mocha-selenium:warn'</span>),
+      error: debugs(<span class="string">'mocha-selenium:error'</span>)
+    }
 
   , path = require(<span class="string">'path'</span>)
   , fs = require(<span class="string">'fs'</span>)
@@ -104,12 +110,28 @@
   , screenshot = require(<span class="string">'./screenshot'</span>)
   , helpers = require(<span class="string">'./helpers'</span>)
   , config = require(<span class="string">'./config'</span>)
+  , client = require(<span class="string">'./client'</span>)
   , local = require(<span class="string">'./local'</span>);
 
 module.exports = {
-  client: require(<span class="string">'./client'</span>),
+  client: client,
   setup: setup
-};
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>if setups don&#39;t require globally unique apps and servers, just use ones stored here</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="keyword">var</span> singletonRunners = {};
 
 <span class="function"><span class="keyword">function</span> <span class="title">remote</span><span class="params">(server)</span> {</span>
   <span class="keyword">return</span> webdriver.remote(server.host, server.port, server.username, server.password);
@@ -118,11 +140,11 @@ module.exports = {
         </li>
         
         
-        <li id="section-2">
+        <li id="section-3">
             <div class="annotation">
               
               <div class="pilwrap for-h3">
-                <a class="pilcrow" href="#section-2">&#182;</a>
+                <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
               <h3>Setup the driver</h3>
 <p>Registers <code>before</code>, <code>after</code>, and <code>afterEach</code> handlers and returns a
@@ -135,11 +157,11 @@ falsey, (and there&#39;s no <code>process.env.SEL_URL</code>) we&#39;ll start up
 server on a random port.</p>
 <h5>server</h5>
 <p>The selenium server. <code>{host: , port: , username: , password: }</code>.
-If it&#39;s null, we&#39;ll start up a <code>chromedriver</code> or <code>phantomjs</code>, based
-on the <code>browser</code> argument defaulting to <code>chromedriver</code>. &#39;dev&#39; is a
-shortcut for <code>{host: &#39;localhost&#39;, port: 4444}</code>.</p>
+If it&#39;s &#39;dev&#39;, we&#39;ll start up a <code>chromedriver</code> or <code>phantomjs</code>, based
+on the <code>browser</code> argument defaulting to <code>chromedriver</code>.</p>
 <p>If <code>server</code> is null and <code>process.env.SEL_HOST</code> is truthy, then the
-server is taken from the following <code>ENV</code> variables.</p>
+server is taken from the following <code>ENV</code> variables. If <code>SEL_HOST</code>
+is falsey, we&#39;ll start up a webdriver for you.</p>
 <p>ENV Defaults</p>
 <ul>
 <li>host: <code>SEL_HOST</code></li>
@@ -158,8 +180,12 @@ server is taken from the following <code>ENV</code> variables.</p>
 <h5>lastShot</h5>
 <p>save screenshots of the final state of each test. <code>true</code>: all
 test. <code>&#39;failed&#39;</code>: only tests that failed.</p>
+<h5>keepAlive</h5>
+<p>Don&#39;t kill the browser after completing tests. Useful for manually
+inspecting failures.</p>
 <h5>appDir</h5>
-<p>the root directory of your app (so foreman knows). Defaults to <code>cwd</code>.</p>
+<p>the root directory of your app (so foreman knows). Defaults to the
+env vbl <code>APP_HOME</code> or <code>cwd</code>.</p>
 <h5>shotDir</h5>
 <p>where to save screenshots. Defaults to <code>appDir/test/last-shots</code>.</p>
 
@@ -171,24 +197,39 @@ test. <code>&#39;failed&#39;</code>: only tests that failed.</p>
   }
 
   options = _.extend({
-    appDir: process.env.APP_DIR || process.cwd(),
+    appDir: process.env.APP_HOME || process.cwd(),
     browser: config.envBrowser(),
     server: config.envServer(),
     url: process.env.SEL_URL,
+    keepAlive: <span class="literal">false</span>,
     lastShot: <span class="literal">false</span>,
-    shotDir: <span class="literal">null</span>
+    shotDir: <span class="literal">null</span>,
+    unique: <span class="literal">false</span>
   }, options || {});
+
+  <span class="keyword">var</span> singleton;
+  <span class="keyword">if</span> (!options.unique &amp;&amp; (!options.url || options.server === <span class="string">'dev'</span>)) {
+    singleton = JSON.stringify({
+      appDir: !options.url &amp;&amp; options.appDir,
+      browser: options.browser || <span class="literal">false</span>,
+      sever: options.server || <span class="literal">false</span>,
+      url: options.url || <span class="literal">false</span>
+    });
+    <span class="keyword">if</span> (singletonRunners[singleton]) {
+      _.extend(options, singletonRunners[singleton].options);
+    }
+  }
 
   <span class="keyword">if</span> (options.lastShot &amp;&amp; !options.shotDir) {
     options.shotDir = path.join(options.appDir, <span class="string">'test/last-shot'</span>);
-    <span class="keyword">if</span> (!fs.exitsSync(options.shotDir)) {
+    <span class="keyword">if</span> (!fs.existsSync(options.shotDir)) {
       mkdirp = require(<span class="string">'mkdirp'</span>);
       mkdirp.sync(options.shotDir);
     }
   }
 
   <span class="keyword">var</span> startDriver = <span class="literal">false</span>
-    , running = {}
+    , running = <span class="literal">false</span>
     , driver
     , port;
 
@@ -197,29 +238,41 @@ test. <code>&#39;failed&#39;</code>: only tests that failed.</p>
     options.url = <span class="string">'http://localhost:'</span> + port;
   }
 
-  <span class="keyword">if</span> (options.server === <span class="literal">null</span>) {
+  <span class="keyword">if</span> (options.server === <span class="string">'dev'</span>) {
     startDriver = <span class="literal">true</span>;
     options.server = {
       host: <span class="string">'localhost'</span>,
       port: parseInt(Math.random() * <span class="number">1000</span>, <span class="number">10</span>) + <span class="number">7000</span>
-    };
-  } <span class="keyword">else</span> <span class="keyword">if</span> (options.server === <span class="string">'dev'</span>) {
-    <span class="comment">/* attach to your local selenium server */</span>
-    options.server = {
-      host: <span class="string">'localhost'</span>,
-      port: <span class="number">4444</span>
     };
   }
 
   driver = remote(options.server);
   driver.baseUrl = options.url;
   _.extend(driver, helpers.extension);
+  _.extend(driver, client.extension);
 
   <span class="keyword">if</span> (options.url.indexOf(<span class="string">'http://localhost'</span>) === <span class="number">0</span> &amp;&amp; options.server.host === <span class="string">'ondemand.saucelabs.com'</span>) {
     console.log(<span class="string">"NOTE: make sure you're running sauce-connect."</span>);
   }
 
+  <span class="keyword">if</span> (singleton) {
+    <span class="keyword">if</span> (singletonRunners[singleton]) {
+      <span class="keyword">if</span> (!options.keepAlive) {
+        singletonRunners[singleton].drivers.push(driver);
+      }
+    } <span class="keyword">else</span> {
+      singletonRunners[singleton] = {
+        drivers: [],
+        options: {
+          server: options.server,
+          url: options.url
+        }
+      };
+    }
+  }
+
   before(<span class="function"><span class="keyword">function</span> <span class="params">(done)</span> {</span>
+    <span class="keyword">this</span>.timeout(<span class="number">60</span> * <span class="number">60</span> * <span class="number">1000</span>);
     <span class="function"><span class="keyword">function</span> <span class="title">connect</span><span class="params">()</span> {</span>
       driver.init({
         browserName: options.browser[<span class="number">0</span>],
@@ -228,7 +281,7 @@ test. <code>&#39;failed&#39;</code>: only tests that failed.</p>
         name: testname
       }, <span class="function"><span class="keyword">function</span> <span class="params">(err)</span> {</span>
         <span class="keyword">if</span> (err &amp;&amp; err.code === <span class="string">'ECONNREFUSED'</span>) {
-          <span class="keyword">var</span> msg = <span class="string">'Unabled to connect to selenium server.'</span>;
+          <span class="keyword">var</span> msg = <span class="string">'Unabled to connect to selenium server at '</span> + options.server.host + <span class="string">':'</span> + options.server.port;
           err = <span class="keyword">new</span> Error(msg);
           err.stack = <span class="string">''</span>;
           <span class="keyword">return</span> done(err);
@@ -243,14 +296,27 @@ test. <code>&#39;failed&#39;</code>: only tests that failed.</p>
   });
 
   after(<span class="function"><span class="keyword">function</span> <span class="params">(done)</span> {</span>
-    <span class="keyword">if</span> (running) local.teardown(running);
-    driver.write(done);
+    <span class="keyword">if</span> (singleton &amp;&amp; !running) {
+      debug.info(<span class="string">"Using singleton runners, and I didn't start it."</span>, <span class="keyword">this</span>.test.parent.title)
+      <span class="keyword">return</span> done();
+    }
+    <span class="keyword">this</span>.timeout(<span class="number">2</span> * <span class="number">1000</span>);
+    <span class="keyword">if</span> (options.keepAlive) {
+      debug.info(<span class="string">'Not killing driver -- keepAline is truthy'</span>)
+      <span class="keyword">return</span> done();
+    }
+    driver.quit(<span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+      <span class="keyword">if</span> (!running) <span class="keyword">return</span> done();
+      local.teardown(running, singleton &amp;&amp; singletonRunners[singleton].drivers, done);
+    });
   });
 
   <span class="keyword">if</span> (!options.lastShot) <span class="keyword">return</span> driver;
 
   afterEach(<span class="function"><span class="keyword">function</span> <span class="params">(done)</span> {</span>
+    <span class="keyword">this</span>.timeout(<span class="number">20</span> * <span class="number">1000</span>);
     <span class="keyword">if</span> (options.lastShot === <span class="string">'failed'</span> &amp;&amp; <span class="keyword">this</span>.currentTest.state === <span class="string">'passed'</span>) {
+      debug.info(<span class="string">'skipping screenshot - test passed'</span>)
       <span class="keyword">return</span> done();
     }
     screenshot(<span class="keyword">this</span>.currentTest, driver, options.shotDir, done);

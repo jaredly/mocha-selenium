@@ -99,8 +99,54 @@
 
 module.exports = {
   afterXhr: afterXhr,
-  snoopXhr: snoopXhr
+  snoopXhr: snoopXhr,
+  catchXhr: catchXhr
 };
+
+<span class="function"><span class="keyword">function</span> <span class="title">wrap</span><span class="params">(method)</span> {</span>
+  <span class="keyword">return</span> <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+    <span class="keyword">var</span> args = [].slice.call(arguments);
+    <span class="keyword">this</span>.asyncFunction.apply(<span class="keyword">this</span>, [method].concat(args));
+  };
+}
+
+<span class="keyword">var</span> extension = {};
+<span class="keyword">for</span> (<span class="keyword">var</span> name <span class="keyword">in</span> module.exports) {
+  extension[name] = wrap(module.exports[name]);
+}
+module.exports.extension = extension;
+
+<span class="function"><span class="keyword">function</span> <span class="title">catchXhr</span><span class="params">(match, cb)</span> {</span>
+  <span class="keyword">if</span> (arguments.length === <span class="number">1</span>) {
+    cb = match;
+    match = <span class="literal">null</span>;
+  }
+  console.log(<span class="string">'matching'</span>, match);
+  <span class="keyword">var</span> rx = <span class="keyword">new</span> RegExp(match);
+  <span class="function"><span class="keyword">function</span> <span class="title">handler</span><span class="params">(evt, res, req)</span> {</span>
+    <span class="keyword">if</span> (match &amp;&amp; !req.url.match(rx)) {
+      console.log(<span class="string">'xhr, but no match'</span>, req.url, match);
+    }
+    <span class="keyword">var</span> body = <span class="literal">null</span>;
+    <span class="keyword">try</span> {
+      body = JSON.parse(res.responseText);
+    } <span class="keyword">catch</span> (e) {}
+    $(document).off(<span class="string">'ajaxComplete'</span>, handler);
+    cb({
+      body: body,
+      status: res.status,
+      text: res.responseText,
+      headers: res.getAllResponseHeaders(),
+      sent: {
+        data: req.data,
+        accept: req.Accept,
+        contentType: req.contentType,
+        url: req.url
+      }
+    });
+  }
+  $(document).on(<span class="string">'ajaxComplete'</span>, handler);
+}
 
 <span class="function"><span class="keyword">function</span> <span class="title">afterXhr</span><span class="params">(timeout, cb)</span> {</span>
   <span class="keyword">if</span> (!cb) {

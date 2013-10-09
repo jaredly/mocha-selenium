@@ -98,6 +98,7 @@
   , spawn = require(<span class="string">'child_process'</span>).spawn
   , path = require(<span class="string">'path'</span>)
 
+  , local = require(<span class="string">'./local'</span>)
   , utils = require(<span class="string">'./utils'</span>)
   , Progress = require(<span class="string">'./progress'</span>);
 
@@ -114,8 +115,14 @@ module.exports = Runner;
   <span class="keyword">try</span> {
     <span class="keyword">this</span>.config = require(cfile);
   } <span class="keyword">catch</span> (e) {
-    console.error(<span class="string">'Failed to load config file.'</span>);
-    <span class="keyword">throw</span> e;
+    <span class="keyword">if</span> (e.message.match(<span class="regexp">/Cannot find/</span>)) {
+      console.error(<span class="string">'[error] Config file not found: '</span>, cfile);
+    } <span class="keyword">else</span> {
+      console.error(<span class="string">'[error] Invalid config file: '</span>, cfile);
+    }
+    console.error(<span class="string">'Please specify a valid json file using -c, '</span> +
+                  <span class="string">'or make sure there is a "selenium.json" in your current directory'</span>);
+    process.exit();
   }
   <span class="keyword">if</span> (!<span class="keyword">this</span>.config || !<span class="keyword">this</span>.config.envs) {
     <span class="keyword">throw</span> <span class="keyword">new</span> Error(<span class="string">'Invalid config file. Need `envs: { ... }` defined'</span>);
@@ -132,8 +139,9 @@ module.exports = Runner;
 
 Runner.prototype = {
   execute: <span class="function"><span class="keyword">function</span> <span class="params">(done)</span> {</span>
-    <span class="keyword">var</span> self = <span class="keyword">this</span>;
-    utils.resolveFiles(<span class="keyword">this</span>.config.files, <span class="keyword">this</span>.cwd, <span class="function"><span class="keyword">function</span> <span class="params">(err, files)</span> {</span>
+    <span class="keyword">var</span> self = <span class="keyword">this</span>
+      , baseDir = path.dirname(<span class="keyword">this</span>.options.config);
+    utils.resolveFiles(<span class="keyword">this</span>.config.files, baseDir, <span class="function"><span class="keyword">function</span> <span class="params">(err, files)</span> {</span>
       <span class="keyword">if</span> (err) <span class="keyword">return</span> done(err);
       <span class="keyword">if</span> (!files.length) {
         console.log(<span class="string">'Failed to collect any files to test.'</span>, files, self.config.files);
@@ -153,8 +161,21 @@ Runner.prototype = {
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      self.run(self.options.parallel, files, done);
+            <div class="content"><div class='highlight'><pre>      self.setup(<span class="function"><span class="keyword">function</span> <span class="params">(err)</span> {</span>
+        <span class="keyword">if</span> (err) <span class="keyword">return</span> done(err);
+        self.run(self.options.parallel, files, done);
+      });
     });
+  },
+  setup: <span class="function"><span class="keyword">function</span> <span class="params">(done)</span> {</span>
+    <span class="keyword">if</span> (process.env.URL) {
+      <span class="keyword">this</span>.url = process.env.URL;
+      <span class="keyword">return</span> done();
+    }
+    <span class="keyword">var</span> port = parseInt(Math.random() * <span class="number">1000</span>) + <span class="number">7000</span>
+      , appDir = process.env.APP_HOME || path.join(path.dirname(<span class="keyword">this</span>.options.config), <span class="keyword">this</span>.config.appDir || <span class="string">'.'</span>);
+    <span class="keyword">this</span>.url = <span class="string">'http://localhost:'</span> + port;
+    local.startApp(appDir, port, done);
   },
   run: <span class="function"><span class="keyword">function</span> <span class="params">(parallel, files, done)</span> {</span>
     <span class="keyword">var</span> tasks = []
@@ -243,7 +264,8 @@ Runner.prototype = {
       SEL_PASSWORD: auth &amp;&amp; auth.password,
       SEL_BROWSER: browser[<span class="number">0</span>],
       SEL_VERSION: browser[<span class="number">1</span>],
-      SEL_PLATFORM: browser[<span class="number">2</span>]
+      SEL_PLATFORM: browser[<span class="number">2</span>],
+      SEL_URL: <span class="keyword">this</span>.url
     });
     <span class="keyword">if</span> (<span class="keyword">this</span>.env.hostname) {
       ENV.SEL_HOST = <span class="keyword">this</span>.env.hostname;
@@ -276,7 +298,7 @@ Runner.prototype = {
         out += data;
       });
     }
-    child.on(<span class="string">'close'</span>, <span class="function"><span class="keyword">function</span> <span class="params">(code)</span> {</span>
+    child.on(<span class="string">'exit'</span>, <span class="function"><span class="keyword">function</span> <span class="params">(code)</span> {</span>
       done(code, out);
     });
   },

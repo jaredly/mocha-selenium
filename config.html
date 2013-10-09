@@ -101,8 +101,7 @@ module.exports = {
 };
 
 <span class="function"><span class="keyword">function</span> <span class="title">envServer</span><span class="params">()</span> {</span>
-  <span class="keyword">if</span> (process.env.SEL_HOST === <span class="string">'dev'</span>) <span class="keyword">return</span> <span class="string">'dev'</span>;
-  <span class="keyword">if</span> (!process.env.SEL_HOST) <span class="keyword">return</span> <span class="literal">null</span>;
+  <span class="keyword">if</span> (!process.env.SEL_HOST) <span class="keyword">return</span> <span class="string">'dev'</span>;
   <span class="keyword">return</span> {
     host: process.env.SEL_HOST,
     port: process.env.SEL_PORT,

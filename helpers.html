@@ -95,21 +95,136 @@
 <span class="comment">/** Selenium Webdriver helper functions **/</span>
 
 <span class="keyword">var</span> async = require(<span class="string">'async'</span>)
-  , wd = require(<span class="string">'wd'</span>);
+  , wd = require(<span class="string">'wd'</span>)
+  , _ = require(<span class="string">'underscore'</span>)
+
+  , utils = require(<span class="string">'wd/lib/utils'</span>)
 
 module.exports = {
   ensureCookie: ensureCookie,
   fillInForm: fillInForm,
-  extension: {
-    ensureCookie: wrap(ensureCookie),
-    fillInForm: wrap(fillInForm)
-  }
+  asyncFunction: asyncFunction,
+  valueBy: valueBy,
+  clickBy: clickBy,
+  waitAndClick: waitAndClick,
+  waitAndGet: waitAndGet
 };
+
+<span class="function"><span class="keyword">function</span> <span class="title">valueBy</span><span class="params">(driver, using, value, done)</span> {</span>
+  driver.element(using, value, <span class="function"><span class="keyword">function</span> <span class="params">(err, el)</span> {</span>
+    <span class="keyword">if</span> (err) <span class="keyword">return</span> done(err)
+    driver.getValue(el, <span class="function"><span class="keyword">function</span> <span class="params">(err, value)</span> {</span>
+      done(err, value, el)
+    })
+  })
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">clickBy</span><span class="params">(driver, using, value, done)</span> {</span>
+  driver.element(using, value, <span class="function"><span class="keyword">function</span> <span class="params">(err, el)</span> {</span>
+    <span class="keyword">if</span> (err) <span class="keyword">return</span> done(err)
+    el.click(<span class="function"><span class="keyword">function</span> <span class="params">(err)</span> {</span>
+      <span class="keyword">return</span> done(err, el)
+    })
+  })
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">waitAndClick</span><span class="params">(driver, using, value, timeout, done)</span> {</span>
+  driver.waitAndGet(using, value, timeout, <span class="function"><span class="keyword">function</span> <span class="params">(err, elements)</span> {</span>
+    <span class="keyword">if</span> (err) <span class="keyword">return</span> done(err)
+    <span class="keyword">if</span> (!elements.length) <span class="keyword">return</span> done(<span class="keyword">new</span> Error(<span class="string">'Element not found'</span>))
+    elements[<span class="number">0</span>].click(done)
+  })
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">waitAndGet</span><span class="params">(driver, using, value, timeout, done)</span> {</span>
+  <span class="keyword">var</span> endTime = Date.now() + timeout;
+
+  <span class="keyword">var</span> poll = <span class="keyword">function</span>(){
+    driver.elements(using, value, <span class="keyword">function</span>(err, elements){
+      <span class="keyword">if</span>(err){
+        <span class="keyword">return</span> done(err);
+      }
+
+      <span class="keyword">if</span> (elements.length) {
+        done(<span class="literal">null</span>, elements);
+      } <span class="keyword">else</span> {
+        <span class="keyword">if</span>(Date.now() &gt; endTime){
+          done(<span class="keyword">new</span> Error(<span class="string">"Element didn't appear"</span>));
+        } <span class="keyword">else</span> {
+          setTimeout(poll, <span class="number">200</span>);
+        }
+      }
+    });
+  };
+
+  poll();
+}
+
+<span class="keyword">var</span> extension = {};
+<span class="keyword">for</span> (<span class="keyword">var</span> name <span class="keyword">in</span> module.exports) {
+  extension[name] = wrap(module.exports[name]);
+}
+module.exports.extension = extension;
+
+module.exports.parseFunction = parseFunction;
+
+_.each(utils.elementFuncTypes, <span class="keyword">function</span>(type) {
+
+  <span class="comment">/**
+   * valueByClassName(value, cb) -&gt; cb(err, element)
+   * ...
+   *
+   * @jsonWire POST /session/:sessionId/element
+   */</span>
+  extension[<span class="string">'value'</span> + utils.elFuncSuffix(type)] = <span class="keyword">function</span>(value, cb) {
+    valueBy.apply(<span class="keyword">this</span>, [<span class="keyword">this</span>, utils.elFuncFullType(type), value, cb]);
+  };
+
+  <span class="comment">/**
+   * clickByClassName(value, cb) -&gt; cb(err, element)
+   * ...
+   *
+   * @jsonWire POST /session/:sessionId/element
+   */</span>
+  extension[<span class="string">'click'</span> + utils.elFuncSuffix(type)] = <span class="keyword">function</span>(value, cb) {
+    clickBy.apply(<span class="keyword">this</span>, [<span class="keyword">this</span>, utils.elFuncFullType(type), value, cb]);
+  };
+
+  <span class="comment">/**
+   * waitAndGetByClassName(value, timeout, cb) -&gt; cb(err)
+   * ...
+   */</span>
+
+  extension[<span class="string">'waitAndGet'</span> + utils.elFuncSuffix(type)] = <span class="keyword">function</span>(value, timeout, cb) {
+    waitAndGet.apply(<span class="keyword">this</span>, [<span class="keyword">this</span>, utils.elFuncFullType(type), value, timeout, cb]);
+  };
+
+  extension[<span class="string">'waitAndClick'</span> + utils.elFuncSuffix(type)] = <span class="keyword">function</span>(value, timeout, cb) {
+    waitAndClick.apply(<span class="keyword">this</span>, [<span class="keyword">this</span>, utils.elFuncFullType(type), value, timeout, cb]);
+  };
+
+});
+
 
 <span class="function"><span class="keyword">function</span> <span class="title">wrap</span><span class="params">(fn)</span> {</span>
   <span class="keyword">return</span> <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
     <span class="keyword">return</span> fn.apply(<span class="literal">null</span>, [<span class="keyword">this</span>].concat([].slice.call(arguments)));
   };
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">parseFunction</span><span class="params">(method)</span> {</span>
+  <span class="keyword">var</span> text = method.toString()
+    , body = text.substring(text.indexOf(<span class="string">'{'</span>) + <span class="number">1</span>, text.lastIndexOf(<span class="string">'}'</span>) - <span class="number">1</span>)
+    , args = text.split(<span class="string">'('</span>)[<span class="number">1</span>].split(<span class="string">')'</span>)[<span class="number">0</span>].split(<span class="string">','</span>).map(Function.call.bind(<span class="string">''</span>.trim))
+    , decl;
+  <span class="keyword">if</span> (args.length !== method.length) {
+    <span class="keyword">throw</span> <span class="keyword">new</span> Error(<span class="string">'Failed to parse async method: bad arguments. '</span> + JSON.stringify(args) + <span class="string">'; should be '</span> + method.length);
+  }
+  <span class="keyword">if</span> (!args.length) <span class="keyword">return</span> body;
+  decl = <span class="string">'  var '</span> + args.map(<span class="function"><span class="keyword">function</span> <span class="params">(name, i)</span> {</span>
+    <span class="keyword">return</span> name + <span class="string">' = arguments['</span> + i + <span class="string">']'</span>;
+  }).join(<span class="string">'\n    , '</span>) + <span class="string">';'</span>;
+  <span class="keyword">return</span> decl + <span class="string">'\n'</span> + body;
 }</pre></div></div>
             
         </li>
@@ -120,6 +235,31 @@ module.exports = {
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>usage: (driver, method, arg, arg, ..., callback)</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">asyncFunction</span><span class="params">(driver, method)</span> {</span>
+  <span class="keyword">var</span> args = [].slice.call(arguments, <span class="number">2</span>)
+    , done = args.pop()
+    , body = parseFunction(method);
+  <span class="keyword">if</span> (<span class="string">'function'</span> !== <span class="keyword">typeof</span> done) {
+    <span class="keyword">throw</span> <span class="keyword">new</span> Error(<span class="string">'Last argument to `asyncFunction` must be a callback function'</span>);
+  }
+  driver.executeAsync(body, args, <span class="function"><span class="keyword">function</span> <span class="params">(err, result)</span> {</span>
+    done(err, result);
+  });
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
               <p>Set a cookie. If the cookie is already set, we don&#39;t re-set it.
   b: driver
@@ -154,11 +294,11 @@ module.exports = {
         </li>
         
         
-        <li id="section-3">
+        <li id="section-4">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-3">&#182;</a>
+                <a class="pilcrow" href="#section-4">&#182;</a>
               </div>
               <p>validate that the cookie was indeed set</p>
 
@@ -185,11 +325,11 @@ module.exports = {
         </li>
         
         
-        <li id="section-4">
+        <li id="section-5">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-4">&#182;</a>
+                <a class="pilcrow" href="#section-5">&#182;</a>
               </div>
               <p>Fill in a form with data
   driver: driver
