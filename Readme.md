@@ -76,7 +76,8 @@ Run your mocha selenium tests in parallel in mutliple browsers.
   envs: { // a map of [envname] to an environment definition.
     local: [browserdef, ...] || {
       browsers: [browserdef, ...],
-      inherits: // name or list of names of other environemnts. Their browserdefs will be appended to the current env.
+      inherits: // name or list of names of other environemnts. Their
+                // browserdefs will be appended to the current env.
       // if no hostname is given, mocha-selenium will start its own
       // selenium drivers. Currently phantomjs and chrome are supported
       hostname: "ondemand.saucelabs.com",
