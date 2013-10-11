@@ -9,6 +9,8 @@ Setup and teardown with mocha's `before` and `after`.
 - start webdriver server (if needed)
 - take screenshots after failed tests
 
+[Read the docs](http://jaredly.github.io/mocha-selenium/#section-2) for more information on the options.
+
 ```js
 var expect = require('expect.js')
   , b = require('mocha-selenium').setup("Login Page", {
@@ -41,8 +43,6 @@ describe('The login page', function () {
   })
 })
 ```
-
-[Read the docs](http://jaredly.github.io/mocha-selenium/#section-2) for more information on the options.
 
 ### Convenience functions added to the driver
 In addition to the normal
