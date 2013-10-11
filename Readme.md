@@ -10,10 +10,36 @@ Setup and teardown with mocha's `before` and `after`.
 - take screenshots after failed tests
 
 ```js
-var driver = require('mocha-selenium').setup("Login Page", {
-  appDir: path.dirname(__dirname),
-  lastShot: "failed"
-});
+var expect = require('expect.js')
+  , b = require('mocha-selenium').setup("Login Page", {
+      appDir: path.dirname(__dirname),
+      lastShot: "failed"
+    });
+
+describe('The login page', function () {
+  this.timeout(20 * 1000)
+  before(function (done) {
+    b.get(b.baseUrl + '/login', done)
+  })
+  it('should work', function (done) {
+    function fail(err) {
+      b.haltChain()
+      done(err)
+    }
+    b.chain({onError: fail})
+     .fillInForm('.loginForm', {
+       username: 'jsmith',
+       password: '1830'
+     })
+     .clickByCss('.loginForm button.submit')
+     // make sure we were redirected to the account page
+     .url(function (err, url) {
+       if (err) return fail(err)
+       expect(url).to.match(/\/account$/)
+       done()
+     })
+  })
+})
 ```
 
 [Read the docs](http://jaredly.github.io/mocha-selenium/#section-2) for more information on the options.
