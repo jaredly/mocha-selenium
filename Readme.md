@@ -65,6 +65,9 @@ given, only inputs that are children of the given selector will be
 filled in. Otherwise, the first input in the document with the given
 `name` will be populated.
 
+##### `rel(url, done(err))`
+Gets `b.baseUrl + url`.
+
 #### Element-specific methods
 The following suffixes are available for these methods, mirroring the `wd` library:
 
@@ -72,6 +75,8 @@ ByClassName, ByCssSelector, ById, ByName, ByLinkText, ByPartialLinkText, ByTagNa
 
 I will use the `ByCss` suffix for demonstration.
 
+- textByCss(selector, done(err, value, element)
+- visibleByCss(selector, done(err, value, element)
 - valueByCss(selector, done(err, value, element)
 - clickByCss(selector, done(err, element)
 - waitAndGet(selector, timeout, done(err, element)
