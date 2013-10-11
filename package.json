@@ -1,6 +1,6 @@
 {
   "name": "mocha-selenium",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Run mocha selenium acceptance tests in different browsers, in serial or parallel",
   "main": "index.js",
   "scripts": {
