@@ -67,7 +67,7 @@ filled in. Otherwise, the first input in the document with the given
 `name` will be populated.
 
 ##### `rel(url, done(err))`
-Gets `b.baseUrl + url`.
+= `b.get(b.baseUrl + url, done)`.
 
 #### Element-specific methods
 The following suffixes are available for these methods, mirroring the `wd` library:
