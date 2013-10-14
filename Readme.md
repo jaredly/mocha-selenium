@@ -76,12 +76,12 @@ ByClassName, ByCssSelector, ById, ByName, ByLinkText, ByPartialLinkText, ByTagNa
 
 I will use the `ByCss` suffix for demonstration.
 
-- textByCss(selector, done(err, value, element)
-- visibleByCss(selector, done(err, value, element)
-- valueByCss(selector, done(err, value, element)
-- clickByCss(selector, done(err, element)
-- waitAndGet(selector, timeout, done(err, element)
-- waitAndClickByCss(selector, timeout, done(err, element)
+- textByCss(selector, done(err, text, element))
+- visibleByCss(selector, done(err, isVisible, element))
+- valueByCss(selector, done(err, value, element))
+- clickByCss(selector, done(err, element))
+- waitAndGet(selector, timeout, done(err, element))
+- waitAndClickByCss(selector, timeout, done(err, element))
 
 ### The Runner
 Run your mocha selenium tests in parallel in mutliple browsers.
