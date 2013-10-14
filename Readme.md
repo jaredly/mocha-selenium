@@ -2,15 +2,16 @@
 # Mocha Selenium
 Everything you need for selenium testing in node.js.
 
+There are two parts: the library and the runner.
+
+The library provides you with the `setup()` function which returns a driver that is instrumented to make your tests **simple, semantic, and easy to use**. Among other things, it is automatically initialized in a `before()` clause, destroyed in an `after()` clause, and will even fire up an instance of your app & a webdriver server if you need them!
+
+The runner is configured with a `selenium.json` file, and will run your mocha test files in series or in parallel, for any number of browsers. Installing it with `npm install -g mocha-selenium` will give you the `mocha-selenium` command on your path.
+
 ### The Library
-Setup and teardown with mocha's `before` and `after`.
-- gives you `wd.driver` Webdriver Client
-- start fresh instance of your app (if needed)
-- start webdriver server (if needed)
-- take screenshots after failed tests
+Has a bunch of options. Some of the options are default to ENV variables if they are present. [Read the docs](http://jaredly.github.io/mocha-selenium/#section-2) for a thorough description.
 
-[Read the docs](http://jaredly.github.io/mocha-selenium/#section-2) for more information on the options.
-
+Here's an example:
 ```js
 var expect = require('expect.js')
   , b = require('mocha-selenium').setup("Login Page", {
@@ -75,12 +76,12 @@ ByClassName, ByCssSelector, ById, ByName, ByLinkText, ByPartialLinkText, ByTagNa
 
 I will use the `ByCss` suffix for demonstration.
 
-- textByCss(selector, done(err, value, element)
-- visibleByCss(selector, done(err, value, element)
-- valueByCss(selector, done(err, value, element)
-- clickByCss(selector, done(err, element)
-- waitAndGet(selector, timeout, done(err, element)
-- waitAndClickByCss(selector, timeout, done(err, element)
+- textByCss(selector, done(err, text, element))
+- visibleByCss(selector, done(err, isVisible, element))
+- valueByCss(selector, done(err, value, element))
+- clickByCss(selector, done(err, element))
+- waitAndGet(selector, timeout, done(err, element))
+- waitAndClickByCss(selector, timeout, done(err, element))
 
 ### The Runner
 Run your mocha selenium tests in parallel in mutliple browsers.
@@ -105,7 +106,7 @@ Run your mocha selenium tests in parallel in mutliple browsers.
 {
   files: // filename or glob, or list of filenames or globs
   envs: { // a map of [envname] to an environment definition.
-    local: [browserdef, ...] || {
+    local: [browserdef, ...] OR {
       browsers: [browserdef, ...],
       inherits: // name or list of names of other environemnts. Their
                 // browserdefs will be appended to the current env.
@@ -117,7 +118,7 @@ Run your mocha selenium tests in parallel in mutliple browsers.
         type: 'plain',
         username: 'MyName',
         password: 'secret'
-      } || {
+      } OR {
         type: 'env', // the username and password are environmental variables
         username: 'SAUCE_USERNAME',
         password: 'SAUCE_ACCESS_KEY'
