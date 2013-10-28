@@ -33,7 +33,8 @@
     "mkdirp": "~0.3.5",
     "debug": "~0.7.2",
     "shell-quote": "~1.3.3",
-    "superagent": "~0.15.5"
+    "superagent": "~0.15.5",
+    "httpcheck": "0.0.1"
   },
   "devDependencies": {
     "jshint": "~2.1.11",
