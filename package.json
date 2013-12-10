@@ -27,7 +27,7 @@
   "dependencies": {
     "underscore": "~1.5.2",
     "commander": "~2.0.0",
-    "wd": "~0.1.4",
+    "wd": "~0.2.5",
     "async": "~0.2.9",
     "glob": "~3.2.6",
     "mkdirp": "~0.3.5",

@@ -11,12 +11,15 @@ The runner is configured with a `selenium.json` file, and will run your mocha te
 ### The Library
 Has a bunch of options. Some of the options are default to ENV variables if they are present. [Read the docs](http://jaredly.github.io/mocha-selenium/#section-2) for a thorough description.
 
+Optionally if you are using the promise webdriver or promiseChain webdriver supported by [wd](https://github.com/admc/wd#q-promises--chaining), you can pass a `webdriverType` to the setup options object. You can use either 'promise' or 'promiseChain' as the string, if not passed the default webdriver will be used.
+
 Here's an example:
 ```js
 var expect = require('expect.js')
   , b = require('mocha-selenium').setup("Login Page", {
       appDir: path.dirname(__dirname),
-      lastShot: "failed"
+      lastShot: "failed",
+      webdriverType: 'promiseChain'  // OPTIONAL
     });
 
 describe('The login page', function () {
