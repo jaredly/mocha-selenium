@@ -1,3 +1,5 @@
+## Maintenance status: low
+I'm not actively using this, and haven't touched it in 3 years. If you have errors, I'm not super likely to be able to reproduce them (am not using selenium actively) but I'm happy to help you debug if you like, and I'm definitely happy to accept Pull Requests.
 
 # Mocha Selenium
 Everything you need for selenium testing in node.js.
